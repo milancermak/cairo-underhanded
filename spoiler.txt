@@ -1,0 +1,20 @@
+The contract (main.cairo) is a ERC20 token. It's also mintable and burnable
+by the minter and burner who are assigned tne Mint and Burn roles. Here's
+the catch - the roles are stored in the `owns` storage variable in the
+own.cairo file. However, the tkn.cairo file also has a `owns` storage var,
+seemingly used to store token balances. However, when the main.cairo contract
+is compiled, one variable overshadows the other, so now both values (roles
+and token balances) get saved into the same place.
+
+Hence, when any account has a token balance of 109, which is the ASCII value
+of 'm' (how Cairo stores a character), the constant for Roles.Mint in own.cairo,
+that account can freely mint tokens, because the `can(Roles.Mint)` check will
+return TRUE. Similarly, if there's an account with a token balance of 98 (ASCII
+of 'b'), they can burn tokens to their liking.
+
+That's the main exploit, merging of two separate @storage_vars from two modules
+in the main compiled contract.
+
+It might be that there are other unintended horrid hacks in transfer or
+allowance logic. I kept the code somewhat ugly on purpose to "hide" this primary
+hack. Appologies dear auditor, beer's on me. Cheers!
